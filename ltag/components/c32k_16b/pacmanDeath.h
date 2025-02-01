@@ -1,0 +1,8 @@
+
+#include <stdint.h>
+
+#define PACMANDEATH_BITS_PER_SAMPLE 16
+#define PACMANDEATH_SAMPLE_RATE 32000
+#define PACMANDEATH_SAMPLES 49471
+
+extern const int16_t pacmanDeath[PACMANDEATH_SAMPLES];

@@ -1,0 +1,8 @@
+
+#include <stdint.h>
+
+#define SCREAMANDDIE_BITS_PER_SAMPLE 16
+#define SCREAMANDDIE_SAMPLE_RATE 32000
+#define SCREAMANDDIE_SAMPLES 55678
+
+extern const int16_t screamAndDie[SCREAMANDDIE_SAMPLES];

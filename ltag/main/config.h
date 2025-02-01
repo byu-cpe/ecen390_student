@@ -1,0 +1,27 @@
+#ifndef CONFIG_H_
+#define CONFIG_H_
+
+#define CONFIG_MAIN_TICK_PERIOD 40 // ms
+#define CONFIG_TIME_OUT_PERIOD 500 // ms
+#define CONFIG_LOCKOUT_PERIOD 500 // ms
+#define CONFIG_HITLED_PERIOD 500 // ms
+#define CONFIG_INVINCIBILITY_PERIOD 5000 // ms
+
+#if CONFIG_IDF_TARGET_ESP32
+#define CONFIG_SND_SAMPLE_RATE 24000 // samples/sec
+#define CONFIG_RX_SAMPLE_RATE 100000 // samples/sec
+#else
+#define CONFIG_SND_SAMPLE_RATE 32000 // samples/sec
+#define CONFIG_RX_SAMPLE_RATE 80000 // samples/sec
+#endif
+
+#define CONFIG_TX_PULSE 200 // ms
+#define CONFIG_SHOT_COUNT 10 // max shot count
+#define CONFIG_SHOT_RELOAD_PERIOD 3000 // ms
+
+#define CONFIG_GAMEOVER_DELAY 1000 // ms
+
+#define CONFIG_PLAY_FREQ \
+	{1250, 1481, 1739, 2000, 2353, 2667, 3077, 3333, 3636, 4000}
+
+#endif // CONFIG_H_
