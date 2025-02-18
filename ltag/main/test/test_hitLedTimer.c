@@ -22,9 +22,14 @@ static volatile uint32_t update_cnt;
 // Called when timer alarms
 static void update(TimerHandle_t pt)
 {
+	if (hitLedTimer_running()) {
+		printf(" -- error: hit LEC timer running\n");
+		err = true;
+	}
 	hitLedTimer_start();
+	taskYIELD();
 	if (!hitLedTimer_running()) {
-		printf(" -- error: hit LEC timer init\n");
+		printf(" -- error: hit LEC timer not running\n");
 		err = true;
 	}
 	update_cnt++;
