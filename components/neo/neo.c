@@ -1,3 +1,6 @@
+// https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/rmt.html
+// https://github.com/espressif/esp-idf/tree/master/examples/peripherals/rmt/led_strip
+// https://github.com/espressif/esp-idf/tree/master/examples/peripherals/rmt/led_strip_simple_encoder
 
 #include "driver/rmt_tx.h"
 #include "esp_log.h"
@@ -11,9 +14,10 @@ static const char *TAG = "neo";
 // 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
 #define NEO_RESOLUTION_HZ 10000000
 
-rmt_channel_handle_t led_chan;
-rmt_encoder_handle_t led_encoder;
-rmt_transmit_config_t tx_config; // .loop_count = 0, no looping
+static rmt_channel_handle_t led_chan;
+static rmt_encoder_handle_t led_encoder;
+static rmt_transmit_config_t tx_config; // .loop_count = 0, no looping
+static bool rmt_live;
 
 
 // Initialize the NeoPixel driver.
@@ -21,6 +25,7 @@ rmt_transmit_config_t tx_config; // .loop_count = 0, no looping
 // Return zero if successful, or non-zero otherwise.
 int32_t neo_init(int32_t gpio_num)
 {
+	if (rmt_live) return 0;
 	rmt_tx_channel_config_t tx_chan_config = {
 		.clk_src = RMT_CLK_SRC_DEFAULT, // select source clock
 		.gpio_num = gpio_num,
@@ -40,6 +45,7 @@ int32_t neo_init(int32_t gpio_num)
 	ESP_LOGI(TAG, "Enable RMT TX channel");
 	ESP_ERROR_CHECK(rmt_enable(led_chan));
 
+	rmt_live = true;
 	return 0;
 }
 

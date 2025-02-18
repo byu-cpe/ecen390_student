@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
@@ -8,7 +6,6 @@
 
 #include "hw.h"
 #include "lcd.h"
-#include "neo.h"
 #include "histogram.h"
 #include "filter.h"
 #include "detector.h"
@@ -38,7 +35,7 @@ static void update(TimerHandle_t pt)
 // Main application
 void app_main(void)
 {
-	ESP_LOGI(TAG, "Laser tag main");
+	ESP_LOGI(TAG, "app_main");
 
 	// Basic initialization
 	// Make sure LTAG TX is low to start
@@ -58,7 +55,6 @@ void app_main(void)
 	gpio_set_direction(HW_NAV_UP, GPIO_MODE_INPUT);
 
 	// Application specific initialization
-	neo_init(HW_LTAG_LED); // must precede hitLedTimer_init
 	hitLedTimer_init(CONFIG_HITLED_PERIOD, HW_LTAG_LED);
 	invincibilityTimer_init(CONFIG_INVINCIBILITY_PERIOD);
 	lockoutTimer_init(CONFIG_LOCKOUT_PERIOD);

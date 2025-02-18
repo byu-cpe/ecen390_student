@@ -2,7 +2,11 @@ set(MILESTONE "m3t1")
 
 if("${MILESTONE}" STREQUAL "m3t1")
   set(SFILES main_m3t1.c delay.c coef.c filter.c)
-  set(COMPS config driver esp_timer lcd histogram test)
+  set(COMPS config driver esp_timer lcd test)
+
+elseif("${MILESTONE}" STREQUAL "m3t2")
+  set(SFILES main_m3t2.c trigger.c tx.c hitLedTimer.c)
+  set(COMPS config driver esp_timer lcd neo test)
 
 elseif("${MILESTONE}" STREQUAL "m3t3")
   set(SFILES main_m3t3.c delay.c coef.c filter.c tx.c hitLedTimer.c buffer.c rx.c)
@@ -16,3 +20,8 @@ endif()
 idf_component_register(SRCS ${SFILES} INCLUDE_DIRS . PRIV_REQUIRES ${COMPS})
 # target_compile_options(${COMPONENT_LIB} PRIVATE -DDIAG) # use with m3t3
 message(STATUS "MILESTONE=${MILESTONE}")
+
+if("${MILESTONE}" STREQUAL "m3t2" AND EXISTS ${CMAKE_CURRENT_LIST_DIR}/test/libm3t2.a)
+  add_prebuilt_library(m3t2 "test/libm3t2.a" PRIV_REQUIRES esp_adc)
+  target_link_libraries(${COMPONENT_LIB} PRIVATE m3t2)
+endif()

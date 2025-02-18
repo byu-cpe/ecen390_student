@@ -22,10 +22,10 @@ bool hitLedTimer_running(void);
 
 // Set the default color for the hit LED when no hit is indicated.
 // color: An array of color intensities ([0]:red, [1]:green, [2]:blue)
-void hitLedTimer_setColor(const uint8_t color[3]);
+void hitLedTimer_setColor(const uint8_t color[]);
 
 // Set the color used when a hit is indicated.
 // color: An array of color intensities ([0]:red, [1]:green, [2]:blue)
-void hitLedTimer_setHitColor(const uint8_t color[3]);
+void hitLedTimer_setHitColor(const uint8_t color[]);
 
 #endif // HITLEDTIMER_H_

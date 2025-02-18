@@ -3,12 +3,14 @@
 #include "driver/gpio.h" // gpio_*
 #include "esp_log.h" // ESP_LOG*
 
-#include "hw.h" // HW_LTAG_TX
+#include "hw.h" // HW_LTAG_*
 #include "lcd.h" // lcd_init
-#include "test_delay.h"
-#include "test_filter.h"
+#include "neo.h"
+#include "test_trigger.h"
+#include "test_tx.h"
+#include "test_hitLedTimer.h"
 
-static const char *TAG = "m3t1";
+static const char *TAG = "m3t2";
 
 // Main application
 void app_main(void)
@@ -19,8 +21,10 @@ void app_main(void)
 	// Make sure LTAG TX is low to start
 	gpio_set_pull_mode(HW_LTAG_TX, GPIO_PULLDOWN_ONLY);
 	lcd_init();
+	neo_init(HW_LTAG_LED); // used by test_trigger
 
-	test_delay();
-	test_filter();
+	test_trigger();
+	test_tx();
+	test_hitLedTimer();
 	return;
 }

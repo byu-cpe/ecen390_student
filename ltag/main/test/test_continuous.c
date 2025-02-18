@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <string.h> // memset
 
 #include "driver/gpio.h"
 #include "esp_timer.h"
@@ -53,7 +54,6 @@ static void dsp_run(void)
 {
 	uint32_t adc_cnt = rx_get_count(); // Save count of elements in ADC buffer
 
-	// DPRINTF("adc_cnt: %lu\n", adc_cnt);
 	while (adc_cnt) {
 		rx_data_t rawAdcValue;
 		filter_data_t scaledAdcValue;
@@ -126,6 +126,12 @@ void test_continuous(void)
 			// Graph energy values on LCD
 			filter_data_t energyValues[FILTER_CHANNELS];
 			filter_getEnergyArray(energyValues);
+			filter_data_t max = energyValues[0];
+			for (uint16_t i = 1; i < FILTER_CHANNELS; i++) {
+				if (energyValues[i] > max) max = energyValues[i];
+			}
+			// Only plot if energy is 1 or above
+			if (max < 1.0f) memset(energyValues, 0, sizeof(energyValues));
 			histogram_plotFloat(energyValues, FILTER_CHANNELS);
 		}
 	}

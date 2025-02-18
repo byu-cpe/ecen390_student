@@ -1,5 +1,3 @@
-#include <stdio.h> // printf
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h" // gpio_*
@@ -11,7 +9,6 @@
 #include "hitLedTimer.h"
 #include "hw.h" // HW_NAV_*, HW_LTAG_*
 #include "lcd.h"
-#include "neo.h"
 #include "rx.h"
 #include "tx.h"
 #include "test_continuous.h"
@@ -28,13 +25,13 @@ void app_main(void)
 {
 	static const uint8_t pixels_def[] = {  1,  1,  1}; // dim white
 	static const uint8_t pixels_hit[] = {255,  0,  0}; // red
-	ESP_LOGI(TAG, "m3t3 main");
+	ESP_LOGI(TAG, "app_main");
 	// Initialization
 	// Make sure LTAG TX is low to start
 	gpio_set_pull_mode(HW_LTAG_TX, GPIO_PULLDOWN_ONLY);
 	lcd_init();
 	histogram_init(FILTER_CHANNELS); // Clears screen
-	gpio_reset_pin(HW_LTAG_TRIGGER);
+	gpio_reset_pin(HW_LTAG_TRIGGER); // TODO: use trigger.c instead?
 	gpio_set_direction(HW_LTAG_TRIGGER, GPIO_MODE_INPUT);
 	gpio_reset_pin(HW_NAV_LT);
 	gpio_set_direction(HW_NAV_LT, GPIO_MODE_INPUT);
@@ -45,9 +42,13 @@ void app_main(void)
 	gpio_reset_pin(HW_NAV_UP);
 	gpio_set_direction(HW_NAV_UP, GPIO_MODE_INPUT);
 	filter_init();
-	tx_init(HW_LTAG_TX);
+	#ifdef DIAG
 	rx_init(HW_LTAG_RX, CONFIG_RX_SAMPLE_RATE);
-	neo_init(HW_LTAG_LED); // must precede hitLedTimer_init
+	tx_init(HW_LTAG_TX);
+	#else
+	rx_init(2, CONFIG_RX_SAMPLE_RATE); // must precede tx_init
+	tx_init(2);
+	#endif // DIAG
 	hitLedTimer_init(CONFIG_HITLED_PERIOD, HW_LTAG_LED);
 	hitLedTimer_setColor(pixels_def);
 	hitLedTimer_setHitColor(pixels_hit);
@@ -60,7 +61,7 @@ void app_main(void)
 
 	test_continuous();
 	#ifndef DIAG
-	test_shot();
+	test_shot(); // TODO: use trigger.c?
 	#endif // DIAG
 
 	tx_emit(false);
