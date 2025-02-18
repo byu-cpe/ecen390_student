@@ -1,4 +1,4 @@
-set(MILESTONE "m3t1")
+set(MILESTONE "m3t2")
 
 if("${MILESTONE}" STREQUAL "m3t1")
   set(SFILES main_m3t1.c delay.c coef.c filter.c)
@@ -6,7 +6,7 @@ if("${MILESTONE}" STREQUAL "m3t1")
 
 elseif("${MILESTONE}" STREQUAL "m3t2")
   set(SFILES main_m3t2.c trigger.c tx.c hitLedTimer.c)
-  set(COMPS config driver esp_timer lcd neo test)
+  set(COMPS config driver esp_timer lcd neo test esp_adc)
 
 elseif("${MILESTONE}" STREQUAL "m3t3")
   set(SFILES main_m3t3.c delay.c coef.c filter.c tx.c hitLedTimer.c buffer.c rx.c)
