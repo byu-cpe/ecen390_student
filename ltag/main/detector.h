@@ -48,17 +48,18 @@ uint16_t detector_getHitChannel(void);
 // Clear the detected hit once you have accounted for it.
 void detector_clearHit(void);
 
-// Run the detector pipeline: read ADC buffer, filter stages, hit detection.
+// Implements the receive path: read ADC buffer, filter stages, hit detection.
 // Get a count of available samples in the ADC receive buffer.
 // Process the count of samples:
 //   Get a sample from the ADC receive buffer.
 //   Convert the sample from integer to floating point (-1.0 to +1.0).
-//   Run the sample through the filter stages (call filter_addSample()).
-//   Do hit detection based on the energy values from each channel.
+//   Provide a new input to the filter stages (call filter_addSample()).
+//   If filter_addSample() returns true, meaning decimation occurred, then:
+//     Get a copy of the energy values from each frequency channel.
+//     Do hit detection based on these energy values.
 // Assumptions:
 //   1) Reading from the ADC buffer is protected with a critical section.
 //   2) Draining the ADC buffer occurs faster than it can fill.
-//   3) Hit detection is done after each decimated sample is processed.
 void detector_run(void);
 
 #endif // DETECTOR_H_

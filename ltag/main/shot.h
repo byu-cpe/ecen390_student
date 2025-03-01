@@ -9,7 +9,7 @@ Background: The shot module manages the shot count and can be used to support
 laser tag with a clip that contains N shots. Once a player has fired N shots 
 they must wait S seconds for the clip to auto reload. The player may force a 
 reload of the clip at any time by pulling and holding the trigger for S seconds 
-(if the clip contains shots, the initial push of the trigger will fire a shot).
+(if the clip contains shots, the initial press of the trigger will fire a shot).
 
 Implementation: During initialization, the shot count is set to the maximum 
 count N. Also, a reload timer is created. The shot count is decremented when a 

@@ -67,6 +67,7 @@ void test_delay(void)
 	for (i = 0; i < DELAY_SIZE; i++) delay_save(&d, MARK(1));
 	if ((v = delay_read(&d, DELAY_SIZE)) != (delay_data_t)0) {
 		printf(" -- error: return value (%.0f) non-zero\n", v);
+		error_cnt++;
 	}
 	err = err || error_cnt;
 

@@ -103,8 +103,9 @@ bool check_samples(uint16_t freq_hz, float pulse_ms, rx_data_t *buf, uint32_t le
 		return true;
 	}
 
+	// printf("fs:%0.1f ", (float)(last-first)*freq_hz/edges);
 	// printf("target:%hu Hz diff:%+5.1f Hz ", freq_hz, actual_freq_hz-freq_hz);
-	printf("freq:%0.1f Hz, duty:%0.1f%%, pulse:%0.1f ms\n",
+	printf("freq:%6.1f Hz, duty:%4.1f%%, pulse:%5.1f ms\n",
 		actual_freq_hz, duty_cycle, actual_pulse_ms);
 
 	return false;
@@ -119,10 +120,10 @@ void test_tx(void)
 	lcd_setFontSize(2);
 	lcd_setFontBackground(BLACK);
 
-	// If rx_init precedes tx_init, internal loopback & AUTO_CLK has less frequency error
-	// If rx_init precedes tx_init, internal loopback & RC_FAST_CLK shows zero samples on rx
-	// If tx_init precedes rx_init, external loopback & RC_FAST_CLK has more frequency error
-	// If tx_init precedes rx_init, internal loopback shows no signal on rx
+	// Based on oscilloscope measurements, the tx frequency with AUTO_CLK was withing +-1 Hz
+	// TODO: figure out why:
+	//   If rx_init precedes tx_init, internal loopback, tx RC_FAST_CLK: shows zero samples on rx
+	//   If tx_init precedes rx_init, internal loopback: shows no signal on rx
 
 	// gpio_set_pull_mode(GPIO_LOOPBACK, GPIO_PULLDOWN_ONLY);
 	// gpio_set_direction(GPIO_LOOPBACK, GPIO_MODE_INPUT_OUTPUT);
