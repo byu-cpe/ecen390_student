@@ -128,24 +128,34 @@ void test_detector(void)
 	detector_ignoreAllHits(false);
 	for (uint16_t i = 0; i < FILTER_CHANNELS; i++) {
 		uint32_t hit_cnt = 0;
+		uint32_t rx1_cnt, rx2_cnt, tot_cnt = 0;
 		int64_t tbeg, tend, t1, t2, tt = 0; // Used for timing
 		rx_clear_buffer();
 		filter_reset();
+		tend = (tbeg = esp_timer_get_time()) + EP3(CONFIG_TX_PULSE);
 		tx_set_freq(play_freq[i]);
 		tx_emit(true);
-		tend = (tbeg = esp_timer_get_time()) + EP3(CONFIG_TX_PULSE);
 		do {
 			// Run filters, compute energy, run hit-detection
+			tot_cnt += rx1_cnt = rx_get_count(); // could still miss a count
 			t1 = esp_timer_get_time();
-			detector_run();
+			detector_run(); // TODO: return elements processed
+			// {while (esp_timer_get_time()-t1 < 625);} // delay for testing
 			t2 = esp_timer_get_time();
+			rx2_cnt = rx_get_count();
 			tt += t2 - t1;
+			if (rx1_cnt && rx2_cnt > rx1_cnt) { // Slow detector
+				printf(" -- error: slow detector ksamples/sec:%llu pre-cnt:%lu post-cnt:%lu\n",
+					EP3(tot_cnt) / tt, rx1_cnt, rx2_cnt);
+				err = true;
+				goto tdet_end;
+			}
 			if (detector_getHit()) { // Hit detected
 				hit_ch = detector_getHitChannel();
 				filter_data_t energy = filter_getEnergyValue(hit_ch);
 				hit_cnt++;          // Increment the hit count
 				printf("hit_ch:%hu energy:%.2e pulse:%2lld ms det:%2lld ms\n",
-					hit_ch, energy, EN3(t2-tbeg), EN3(tt));
+					hit_ch, energy, EN3(t1-tbeg), EN3(tt));
 				break;
 			}
 		} while (esp_timer_get_time() < tend);
@@ -155,10 +165,6 @@ void test_detector(void)
 			err = true;
 		} else if (hit_ch != i) {
 			printf(" -- error: hit on chan:%hu, expecting:%hu\n", hit_ch, i);
-			err = true;
-		}
-		if (tt > t2-tbeg) {
-			printf(" -- error: detector time:%lld us exceeded limit:%lld us\n", tt, t1-tbeg);
 			err = true;
 		}
 		detector_clearHit(); // Clear the hit
