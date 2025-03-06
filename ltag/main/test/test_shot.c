@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include "esp_timer.h" // esp_timer_get_time
+#include "esp_log.h" // LOG_COLOR_*
 
 #include "config.h" // CONFIG_*
 #include "shot.h" // shot_*
@@ -128,5 +129,6 @@ void test_shot(void)
 	}
 
 tshot_end:
-	printf("******** test_shot() %s ********\n\n", err ? "Error" : "Done");
+	printf("******** test_shot() %s ********\n\n",
+		err ? LOG_COLOR_E "Error" LOG_RESET_COLOR : "Done");
 }

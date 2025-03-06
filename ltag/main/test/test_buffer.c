@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "esp_log.h" // LOG_COLOR_*
+
 #include "buffer.h"
 
 #define MAX_ERROR_CNT 5
@@ -88,5 +90,6 @@ void test_buffer(void)
 	err = err || error_cnt;
 
 tb_end:
-	printf("******** test_buffer() %s ********\n\n", err ? "Error" : "Done");
+	printf("******** test_buffer() %s ********\n\n",
+		err ? LOG_COLOR_E "Error" LOG_RESET_COLOR : "Done");
 }
