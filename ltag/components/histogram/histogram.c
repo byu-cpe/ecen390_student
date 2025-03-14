@@ -30,10 +30,10 @@ static bool initFlag =
 // These are the default colors for the bars.
 const static color_t histogram_defaultBarColors[HISTOGRAM_MAX_BAR_COUNT] = {
     BLUE,    RED,    GREEN,   CYAN,
-    MAGENTA, YELLOW, WHITE,   BLUE,
-    RED,     GREEN,  BLUE,    RED,
+    MAGENTA, YELLOW, BLUE,    RED,
+    GREEN,   WHITE,  BLUE,    RED,
     GREEN,   CYAN,   MAGENTA, YELLOW,
-    WHITE,   BLUE,   RED,     GREEN,
+    BLUE,   RED,     GREEN,   WHITE,
     BLUE,    RED,    GREEN,   CYAN,
     MAGENTA};
 static color_t histogram_barColors[HISTOGRAM_MAX_BAR_COUNT];
@@ -363,15 +363,15 @@ void histogram_plotFloat(float values[], uint16_t size) {
   histogram_scaleFloat(out, values, size); // Scale the values.
   for (uint16_t i = 0; i < size; i++) {
     char label[HISTOGRAM_BAR_TOP_MAX_LABEL_WIDTH_IN_CHARS];
-    // Create the label, based upon the hit count.
+    // Create the top label, based upon the values.
     if (snprintf(label, HISTOGRAM_BAR_TOP_MAX_LABEL_WIDTH_IN_CHARS, "%0.1e",
                  values[i]) == -1)
       printf("Error! snprintf encountered an error during conversion.\n");
     // Pull out the 'e' from the exponent to make better use of space.
     histogram_trimLabel(label);
     histogram_setBarData(i, out[i], label);
-    histogram_updateDisplay(); // Redraw the histogram.
   }
+  histogram_updateDisplay(); // Redraw the histogram.
 }
 
 // Plot histogram of integer values.
@@ -384,13 +384,13 @@ void histogram_plotInteger(uint16_t values[], uint16_t size) {
   histogram_scaleInteger(out, values, size); // Scale the values.
   for (uint16_t i = 0; i < size; i++) {
     char label[HISTOGRAM_BAR_TOP_MAX_LABEL_WIDTH_IN_CHARS];
-    // Create the label, based upon the hit count.
+    // Create the top label, based upon the values.
     if (snprintf(label, HISTOGRAM_BAR_TOP_MAX_LABEL_WIDTH_IN_CHARS, "%d",
                  values[i]) == -1)
       printf("Error! snprintf encountered an error during conversion.\n");
     histogram_setBarData(i, out[i], label);
-    histogram_updateDisplay(); // Redraw the histogram.
   }
+  histogram_updateDisplay(); // Redraw the histogram.
 }
 
 #if 0

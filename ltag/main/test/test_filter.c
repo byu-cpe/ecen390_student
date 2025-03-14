@@ -408,7 +408,7 @@ static void plotIirFrequencyResponse(filter_data_t iirEnergyValues[],
                                      uint16_t filterChan) {
 #ifdef HISTOGRAM_H_
   coord_t scaledEnergyValues[FILTER_CHANNELS];
-  histogram_init(FILTER_CHANNELS);
+  histogram_init(FILTER_CHANNELS); // Init the histogram.
   histogram_scaleFloat(scaledEnergyValues, iirEnergyValues, FILTER_CHANNELS);
   // Set the default label and bar color to red for all channels.
   for (uint16_t i = 0; i < FILTER_CHANNELS; i++) {
@@ -613,9 +613,6 @@ void test_filter(void) {
 
   printf("******** test_filter() %s ********\n\n", success ? "Done" : "Error");
 
-  // TODO: Check that the frequency response of the FIR and IIR filters
-  // is in spec mathematically instead of just visually.
-
   /* * * * * * * * Plot functions * * * * * * * */
   // Plot the frequency response of the FIR filter in the passband,
   // transition band, and stopband. A square wave is used for the signal.
@@ -628,3 +625,10 @@ void test_filter(void) {
     msDelay(TWO_SECONDS); // Leave on the display for a few seconds.
   }
 }
+
+/* TODO:
+ * Test filter_getEnergyValue()
+ * Test performance of functions (e.g. FIR filter not run each sample)
+ * Check that the frequency response of the FIR and IIR filters
+   is in spec mathematically instead of just visually.
+ */

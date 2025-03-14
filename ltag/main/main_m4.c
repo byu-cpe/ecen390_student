@@ -4,32 +4,32 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 
+#include "config.h"
 #include "hw.h"
 #include "lcd.h"
 #include "histogram.h"
 #include "filter.h"
 #include "detector.h"
 #include "hitLedTimer.h"
-#include "invincibilityTimer.h"
-#include "lockoutTimer.h"
 #include "shot.h"
 #include "trigger.h"
 #include "tx.h"
 #include "rx.h"
-#include "sound.h"
-#include "game.h"
-#include "config.h"
+#include "test_shooter.h"
+
 
 #define TPERIOD CONFIG_MAIN_TICK_PERIOD // timer period in ms
+#define M4_SHOT_COUNT 40
+#define M4_SHOT_RELOAD_PERIOD 2000
 
-static const char *TAG = "ltag";
+static const char *TAG = "m4";
 static TimerHandle_t update_timer; // Declare timer handle for update callback
 
 
 static void update(TimerHandle_t pt)
 {
 	trigger_tick();
-	game_tick();
+	test_shooter_tick();
 }
 
 // Main application
@@ -56,16 +56,13 @@ void app_main(void)
 
 	// Application specific initialization
 	hitLedTimer_init(CONFIG_HITLED_PERIOD, HW_LTAG_LED);
-	invincibilityTimer_init(CONFIG_INVINCIBILITY_PERIOD);
-	lockoutTimer_init(CONFIG_LOCKOUT_PERIOD);
-	shot_init(CONFIG_SHOT_COUNT, CONFIG_SHOT_RELOAD_PERIOD);
+	shot_init(M4_SHOT_COUNT, M4_SHOT_RELOAD_PERIOD);
 	filter_init();
 	detector_init();
 	trigger_init(TPERIOD, HW_LTAG_TRIGGER);
 	rx_init(HW_LTAG_RX, CONFIG_RX_SAMPLE_RATE);
 	tx_init(HW_LTAG_TX);
-	sound_init(CONFIG_SND_SAMPLE_RATE);
-	game_init(TPERIOD); // last
+	test_shooter_init(TPERIOD); // last
 
 	// Initialize update timer
 	update_timer = xTimerCreate(
@@ -85,10 +82,9 @@ void app_main(void)
 		return;
 	}
 
-	game_loop();
+	test_shooter();
 
 	// Turn off and release resources
-	sound_deinit();
 	tx_emit(false);
 	rx_deinit();
 }

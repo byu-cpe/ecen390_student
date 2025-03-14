@@ -20,7 +20,7 @@ void app_main(void)
 	// Initialization
 	// Make sure LTAG TX is low to start
 	gpio_set_pull_mode(HW_LTAG_TX, GPIO_PULLDOWN_ONLY);
-	lcd_init();
+	lcd_init(); // Clears display
 	neo_init(HW_LTAG_LED); // used by test_trigger
 
 	test_trigger();

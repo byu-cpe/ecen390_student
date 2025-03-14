@@ -3,8 +3,6 @@
 #include "driver/gpio.h" // gpio_*
 #include "esp_log.h" // ESP_LOG*
 
-#define EN_SOUND 1
-
 #include "config.h" // CONFIG_*
 #include "filter.h"
 #include "histogram.h"
@@ -13,14 +11,11 @@
 #include "lcd.h"
 #include "rx.h"
 #include "tx.h"
-#include "test_continuous.h"
-#include "test_shot.h"
-#ifdef EN_SOUND
 #include "sound.h"
 #include "gameBoyStartup.h"
-#endif // EN_SOUND
+#include "test_continuous.h"
 
-static const char *TAG = "m3t3";
+static const char *TAG = "diag";
 
 // Main application
 void app_main(void)
@@ -31,8 +26,8 @@ void app_main(void)
 	// Initialization
 	// Make sure LTAG TX is low to start
 	gpio_set_pull_mode(HW_LTAG_TX, GPIO_PULLDOWN_ONLY);
-	lcd_init();
-	histogram_init(FILTER_CHANNELS); // Clears screen
+	lcd_init(); // Clears display
+	histogram_init(FILTER_CHANNELS); // Clears portion of display
 	gpio_reset_pin(HW_LTAG_TRIGGER); // TODO: use trigger.c instead?
 	gpio_set_direction(HW_LTAG_TRIGGER, GPIO_MODE_INPUT);
 	gpio_reset_pin(HW_NAV_LT);
@@ -49,15 +44,11 @@ void app_main(void)
 	hitLedTimer_init(CONFIG_HITLED_PERIOD, HW_LTAG_LED);
 	hitLedTimer_setColor(pixels_def);
 	hitLedTimer_setHitColor(pixels_hit);
-	hitLedTimer_start();
-	#ifdef EN_SOUND
 	sound_init(CONFIG_SND_SAMPLE_RATE);
-	sound_start(gameBoyStartup, sizeof(gameBoyStartup), true);
-	sound_deinit();
-	#endif // EN_SOUND
 
 	test_continuous();
 
+	sound_deinit();
 	tx_emit(false);
 	rx_deinit();
 	return;

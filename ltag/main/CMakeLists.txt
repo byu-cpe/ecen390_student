@@ -1,4 +1,4 @@
-set(MILESTONE "m3t3")
+set(MILESTONE "m4")
 
 if("${MILESTONE}" STREQUAL "m3t1")
   set(SFILES main_m3t1.c delay.c coef.c filter.c)
@@ -12,9 +12,13 @@ elseif("${MILESTONE}" STREQUAL "m3t3")
   set(SFILES main_m3t3.c buffer.c delay.c coef.c filter.c detector.c shot.c tx.c)
   set(COMPS config driver esp_timer lcd test rx esp_adc)
 
+elseif("${MILESTONE}" STREQUAL "m4")
+  set(SFILES main_m4.c tx.c buffer.c delay.c coef.c filter.c detector.c trigger.c hitLedTimer.c shot.c)
+  set(COMPS config driver esp_timer lcd neo histogram test rx esp_adc)
+
 elseif("${MILESTONE}" STREQUAL "m5")
   set(SFILES main_m5.c tx.c buffer.c delay.c coef.c filter.c detector.c game.c trigger.c hitLedTimer.c invincibilityTimer.c lockoutTimer.c shot.c)
-  set(COMPS config driver esp_timer esp_adc lcd rx histogram neo sound c32k_16b)
+  set(COMPS config driver esp_timer esp_adc lcd rx panel histogram neo sound c32k_16b)
 
 elseif("${MILESTONE}" STREQUAL "diag")
   set(SFILES main_diag.c buffer.c delay.c coef.c filter.c tx.c hitLedTimer.c)

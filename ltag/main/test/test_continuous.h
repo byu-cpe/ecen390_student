@@ -1,11 +1,12 @@
 #ifndef TEST_CONTINUOUS_H_
 #define TEST_CONTINUOUS_H_
 
-// Run tests for the continuous module.
-// - Transmit on the current channel while the trigger pressed.
+// Run tests for continuous mode.
+// - Transmit continuously on the current channel while the trigger pressed.
 // - The channel is changeable with NAV_UP/DN.
 // - Run the DSP pipeline and display energy for each channel.
-// - End when NAV_LT is pressed.
+// - Flash hit indicator when NAV_RT is pressed.
+// - Play sound when NAV_LT is pressed.
 // Assumptions.
 // - Transmit signal is looped back through receiver
 //   (optically or electrically).

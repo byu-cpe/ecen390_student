@@ -12,14 +12,14 @@ int32_t game_init(uint32_t period);
 // This function is safe to call from an ISR context.
 void game_tick(void);
 
-// This game supports two teams, Team-A and Team-B.
+// This game supports multiple teams.
 // Each team operates on its own configurable frequency.
 // Each player has a fixed set of lives and once they
 // have expended all lives, operation ceases and they are told
 // to return to base to await the ultimate end of the game.
 // The gun is clip-based and each clip contains a fixed number of shots
 // that takes a short time to reload a new clip.
-// The clips are automatically loaded.
-void game_twoTeamTag(void);
+// The clips are automatically loaded when empty.
+void game_loop(void);
 
 #endif // GAME_H_

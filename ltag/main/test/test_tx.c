@@ -23,14 +23,16 @@
 
 #define T_EMIT_MS 100
 #define T_PULSE_MS CONFIG_TX_PULSE
-#define T_MARGIN_MS 2
+#define T_MARGIN_MS 10
 
 #define ERROR_PULSE 10.0f // ms
 #define ERROR_DUTY 0.5f   // percent
 #define ERROR_FREQ 25.0f  // Hz
 
+#define RX_BUF_SZ (CONFIG_RX_SAMPLE_RATE*(T_PULSE_MS+3*T_MARGIN_MS)/1000)
+
 static const uint16_t play_freq[FILTER_CHANNELS] = CONFIG_PLAY_FREQ;
-static rx_data_t rx_buf[CONFIG_RX_SAMPLE_RATE/10*3];
+static rx_data_t rx_buf[RX_BUF_SZ];
 
 
 bool check_samples(uint16_t freq_hz, float pulse_ms, rx_data_t *buf, uint32_t len)
@@ -162,6 +164,7 @@ void test_tx(void)
 		t_end = esp_timer_get_time() + EP3(T_EMIT_MS);
 		while (esp_timer_get_time() < t_end) {
 			cnt = rx_get_count();
+			if (rx_idx+cnt > RX_BUF_SZ) cnt = RX_BUF_SZ-rx_idx;
 			while (cnt--) rx_buf[rx_idx++] = rx_get_sample();
 		}
 		tx_emit(false);
@@ -169,6 +172,7 @@ void test_tx(void)
 		t_end = esp_timer_get_time() + EP3(T_MARGIN_MS);
 		while (esp_timer_get_time() < t_end);
 		cnt = rx_get_count();
+		if (rx_idx+cnt > RX_BUF_SZ) cnt = RX_BUF_SZ-rx_idx;
 		while (cnt--) rx_buf[rx_idx++] = rx_get_sample();
 
 		err |= check_samples(play_freq[i], T_EMIT_MS, rx_buf, rx_idx);
@@ -192,12 +196,14 @@ void test_tx(void)
 		t_end = esp_timer_get_time() + EP3(T_PULSE_MS);
 		while (esp_timer_get_time() < t_end) {
 			cnt = rx_get_count();
+			if (rx_idx+cnt > RX_BUF_SZ) cnt = RX_BUF_SZ-rx_idx;
 			while (cnt--) rx_buf[rx_idx++] = rx_get_sample();
 		}
 
 		t_end = esp_timer_get_time() + EP3(T_MARGIN_MS);
 		while (esp_timer_get_time() < t_end);
 		cnt = rx_get_count();
+		if (rx_idx+cnt > RX_BUF_SZ) cnt = RX_BUF_SZ-rx_idx;
 		while (cnt--) rx_buf[rx_idx++] = rx_get_sample();
 
 		err |= check_samples(play_freq[i], T_PULSE_MS, rx_buf, rx_idx);
