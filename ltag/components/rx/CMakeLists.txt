@@ -9,6 +9,6 @@ add_custom_command(TARGET ${COMPONENT_LIB}
                    COMMENT "Copying built archive file to rx directory...")
 else()
 idf_component_register(INCLUDE_DIRS .)
-add_prebuilt_library(rx "librx.a" PRIV_REQUIRES esp_adc)
+add_prebuilt_library(rx "librx.a" PRIV_REQUIRES esp_adc main)
 target_link_libraries(${COMPONENT_LIB} INTERFACE rx)
 endif()
