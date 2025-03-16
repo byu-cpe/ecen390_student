@@ -1,9 +1,9 @@
 idf_component_register(
 SRCS
   bcFire.c
+  clipEmpty.c
   gameBoyStartup.c
   gameOver.c
-  gunEmpty.c
   ouch.c
   pacmanDeath.c
   powerUp.c

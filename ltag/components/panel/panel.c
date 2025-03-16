@@ -13,6 +13,8 @@
 
 
 // Clear each panel region, draw headings
+// p: panel array
+// n: number of panels
 void panel_init(panel_t *p, uint16_t n)
 {
 	char s[SBUF_SZ];
@@ -32,6 +34,8 @@ void panel_init(panel_t *p, uint16_t n)
 }
 
 // Update values in each panel if needed
+// p: panel array
+// n: number of panels
 void panel_update(panel_t *p, uint16_t n)
 {
 	char s[SBUF_SZ];

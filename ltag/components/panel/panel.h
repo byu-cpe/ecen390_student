@@ -8,7 +8,7 @@
 // first row of characters and a value on the second row. Values
 // can be integers, floating point values, or strings. Headings and
 // values are right justified in the panel region specified by
-// x, y, and w. The height is always 2.
+// x, y, and w in characters. The height is always 2 characters.
 
 #define PANEL_STR_SZ 8
 
@@ -30,9 +30,13 @@ typedef struct {
 } panel_t;
 
 // Clear each panel region, draw headings
+// p: panel array
+// n: number of panels
 void panel_init(panel_t *p, uint16_t n);
 
 // Update values in each panel if needed
+// p: panel array
+// n: number of panels
 void panel_update(panel_t *p, uint16_t n);
 
 #endif // PANEL_H_
