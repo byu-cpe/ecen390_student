@@ -41,16 +41,16 @@ for i = 1:length(fname)
     % playblocking(audioplayer(x1,fs));
     % playblocking(audioplayer(xs,t_fs));
 
-    % rescale data to the interval [-2^(t_bits-1)-1, 2^(t_bits-1)-1]
-    gain = 2 .^ (t_bits-1)-1;
+    % rescale data to the interval [-2^(t_bits-1)+1, 2^(t_bits-1)-1]
+    gain = (2 .^ (t_bits-1))-1;
     if exist('t_amp','var') == 1 % if t_amp exists, set the max amplitude
         % change the volume if t_amp is [0.0 to 1.0]
         max_amp = max(abs(min(xs)),abs(max(xs)));
         gain = gain*t_amp/max_amp;
     end
     xr = int32(xs .* gain);
-    xr = min(xr, 2 .^ (t_bits-1)-1); % clip to  2^(t_bits-1)-1
-    xr = max(xr,-2 .^ (t_bits-1)-1); % clip to -2^(t_bits-1)-1
+    xr = min(xr,( 2 .^ (t_bits-1))-1); % clip to ( 2^(t_bits-1))-1
+    xr = max(xr,(-2 .^ (t_bits-1))+1); % clip to (-2^(t_bits-1))+1
 
     % figure;
     % plot(xr);
@@ -61,17 +61,26 @@ for i = 1:length(fname)
     dat2c(xr,path,name,t_fs,t_bits);
 end
 
-% Given a MATLAB array of integer data, create a 'C' array in text
-%   x: MATLAB array of integer data
+% Given a MATLAB array of signed integer data, create a 'C' array in text
+%   xi: MATLAB array of signed integer data
 %   path: directory path to create 'C' file
 %   name: name of 'C' array and also files with .h and .c extension
 %   fs: sample frequency of data
 %   bits: bits per sample of data
 %   Returns the length of the MATLAB array
-function l = dat2c(x,path,name,fs,bits)
-    if bits > 16; t_type = "int32_t"; % target array element type
-    elseif bits > 8; t_type = "int16_t";
-    else; t_type = "int8_t";
+function l = dat2c(xi,path,name,fs,bits)
+    if bits > 16
+        e_type = "int32_t"; % array element type
+        e_format = " %11d,"; % array element format string
+        e_line = 8; % 'C' array elements per line
+    elseif bits > 8
+        e_type = "int16_t";
+        e_format = " %6d,";
+        e_line = 16;
+    else
+        e_type = "int8_t";
+        e_format = " %4d,";
+        e_line = 16;
     end
     str = upper(name);
 
@@ -80,24 +89,22 @@ function l = dat2c(x,path,name,fs,bits)
     fprintf(fid_h, "\n#include <stdint.h>\n\n");
     fprintf(fid_h, "#define %s_BITS_PER_SAMPLE %u\n", str, bits);
     fprintf(fid_h, "#define %s_SAMPLE_RATE %u\n", str, fs);
-    fprintf(fid_h, "#define %s_SAMPLES %u\n\n", str, length(x));
-    fprintf(fid_h, "extern const %s %s[%s_SAMPLES];\n", t_type, name, str);
+    fprintf(fid_h, "#define %s_SAMPLES %u\n\n", str, length(xi));
+    fprintf(fid_h, "extern const %s %s[%s_SAMPLES];\n", e_type, name, str);
     fclose(fid_h);
 
     %%%%%%%%%%%%%%%%%%%% Write .c File %%%%%%%%%%%%%%%%%%%%
-    ELEM_LINE = 16; % 'C' array elements per line
-    t_format = sprintf(" 0x%%0%ux,", bits/4);
     fid_c = fopen(fullfile(path,name+".c"), 'w');
     pos = 0;
-    elem = length(x);
+    elem = length(xi);
 
     fprintf(fid_c, "\n#include <stdint.h>\n\n");
-    fprintf(fid_c, "const %s %s[] = {\n", t_type, name); % start array
+    fprintf(fid_c, "const %s %s[] = {\n", e_type, name); % start array
     while elem > 0 % array data
-        if elem < ELEM_LINE; size = elem; else; size = ELEM_LINE; end
+        if elem < e_line; size = elem; else; size = e_line; end
         for i = 1:size
             % if i == 1; fprintf(fid_c, "\t"); end
-            fprintf(fid_c, t_format, x(pos+i));
+            fprintf(fid_c, e_format, xi(pos+i));
         end
         pos = pos+size;
         elem = elem-size;
@@ -106,5 +113,5 @@ function l = dat2c(x,path,name,fs,bits)
     fprintf(fid_c, "};\n"); % end array
     fclose(fid_c);
 
-    l = length(x);
+    l = length(xi);
 end
