@@ -1,4 +1,4 @@
-set(MILESTONE "m6")
+set(MILESTONE "m5")
 
 if("${MILESTONE}" STREQUAL "m3t1")
   set(SFILES main_m3t1.c delay.c coef.c filter.c)

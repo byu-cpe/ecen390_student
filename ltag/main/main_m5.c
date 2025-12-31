@@ -26,6 +26,7 @@ static const char *TAG = "ltag";
 static TimerHandle_t update_timer; // Declare timer handle for update callback
 
 
+// Called when the timer expires
 static void update(TimerHandle_t pt)
 {
 	trigger_tick();
