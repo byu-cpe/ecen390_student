@@ -9,6 +9,7 @@
 #include "test_trigger.h"
 #include "test_tx.h"
 #include "test_hitLedTimer.h"
+#include "test_shot.h"
 
 static const char *TAG = "m3t2";
 
@@ -26,5 +27,7 @@ void app_main(void)
 	test_trigger();
 	test_tx();
 	test_hitLedTimer();
+	test_shot();
+
 	return;
 }

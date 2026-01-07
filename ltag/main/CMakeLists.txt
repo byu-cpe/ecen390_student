@@ -5,7 +5,7 @@ if("${MILESTONE}" STREQUAL "m3t1")
   set(COMPS config driver esp_timer lcd test)
 
 elseif("${MILESTONE}" STREQUAL "m3t2")
-  set(SFILES main_m3t2.c trigger.c tx.c hitLedTimer.c)
+  set(SFILES main_m3t2.c trigger.c tx.c hitLedTimer.c shot.c)
   set(COMPS config driver esp_timer lcd neo test esp_adc)
 
 elseif("${MILESTONE}" STREQUAL "m3t3")

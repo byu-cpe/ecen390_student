@@ -7,7 +7,6 @@
 #include "lcd.h"
 #include "test_buffer.h"
 #include "test_detector.h"
-#include "test_shot.h"
 
 static const char *TAG = "m3t3";
 
@@ -23,7 +22,6 @@ void app_main(void)
 
 	test_buffer();
 	test_detector();
-	test_shot();
 
 	return;
 }

@@ -100,10 +100,10 @@ def get_files_to_copy_and_zip(lab):
         files.append((src_lab_path / "main/trigger.c", dest_lab_path / "main", True))
         files.append((src_lab_path / "main/tx.c", dest_lab_path / "main", True))
         files.append((src_lab_path / "main/hitLedTimer.c", dest_lab_path / "main", True))
+        files.append((src_lab_path / "main/shot.c", dest_lab_path / "main", True))
     elif lab == "m3t3":
         files.append((src_lab_path / "main/buffer.c", dest_lab_path / "main", True))
         files.append((src_lab_path / "main/detector.c", dest_lab_path / "main", True))
-        files.append((src_lab_path / "main/shot.c", dest_lab_path / "main", True))
     elif lab == "m5":
         files.append((src_lab_path / "main/game.c", dest_lab_path / "main", True))
         files.append((src_lab_path / "main/invincibilityTimer.c", dest_lab_path / "main", True))
