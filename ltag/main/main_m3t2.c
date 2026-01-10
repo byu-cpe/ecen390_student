@@ -26,8 +26,8 @@ void app_main(void)
 
 	test_trigger();
 	test_tx();
-	test_hitLedTimer();
 	test_shot();
+	test_hitLedTimer();
 
 	return;
 }
