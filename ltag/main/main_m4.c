@@ -45,14 +45,17 @@ void app_main(void)
 	histogram_init(FILTER_CHANNELS); // Clears portion of display
 
 	// GPIO initialization for navigation buttons
-	// gpio_set_pull_mode(<gpio>, GPIO_PULLUP_ONLY); set by default
 	gpio_reset_pin(HW_NAV_LT);
+	gpio_pullup_en(HW_NAV_LT);
 	gpio_set_direction(HW_NAV_LT, GPIO_MODE_INPUT);
 	gpio_reset_pin(HW_NAV_RT);
+	gpio_pullup_en(HW_NAV_RT);
 	gpio_set_direction(HW_NAV_RT, GPIO_MODE_INPUT);
 	gpio_reset_pin(HW_NAV_DN);
+	gpio_pullup_en(HW_NAV_DN);
 	gpio_set_direction(HW_NAV_DN, GPIO_MODE_INPUT);
 	gpio_reset_pin(HW_NAV_UP);
+	gpio_pullup_en(HW_NAV_UP);
 	gpio_set_direction(HW_NAV_UP, GPIO_MODE_INPUT);
 
 	// Application specific initialization

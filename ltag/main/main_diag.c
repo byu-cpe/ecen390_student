@@ -29,14 +29,19 @@ void app_main(void)
 	lcd_init(); // Clears display
 	histogram_init(FILTER_CHANNELS); // Clears portion of display
 	gpio_reset_pin(HW_LTAG_TRIGGER); // TODO: use trigger.c instead?
+	gpio_pullup_en(HW_LTAG_TRIGGER);
 	gpio_set_direction(HW_LTAG_TRIGGER, GPIO_MODE_INPUT);
 	gpio_reset_pin(HW_NAV_LT);
+	gpio_pullup_en(HW_NAV_LT);
 	gpio_set_direction(HW_NAV_LT, GPIO_MODE_INPUT);
 	gpio_reset_pin(HW_NAV_RT);
+	gpio_pullup_en(HW_NAV_RT);
 	gpio_set_direction(HW_NAV_RT, GPIO_MODE_INPUT);
 	gpio_reset_pin(HW_NAV_DN);
+	gpio_pullup_en(HW_NAV_DN);
 	gpio_set_direction(HW_NAV_DN, GPIO_MODE_INPUT);
 	gpio_reset_pin(HW_NAV_UP);
+	gpio_pullup_en(HW_NAV_UP);
 	gpio_set_direction(HW_NAV_UP, GPIO_MODE_INPUT);
 	filter_init();
 	rx_init(HW_LTAG_RX, CONFIG_RX_SAMPLE_RATE);

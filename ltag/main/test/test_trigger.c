@@ -23,6 +23,10 @@ static volatile uint16_t trigger_press_cnt;
 static volatile uint16_t trigger_release_cnt;
 static volatile uint32_t update_cnt;
 
+// stderr is buffered by default in ESP-IDF v6 (breaking the C standard)
+// https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-guides/stdio.html
+// Calling setvbuf(stderr, NULL, _IONBF, 0); does not work, so fflush(stderr); is used
+
 // Called when timer alarms
 static void update(TimerHandle_t pt)
 {
@@ -34,7 +38,7 @@ static void update(TimerHandle_t pt)
 static void trig_pressed(void)
 {
 	neo_write(pixels_whi, sizeof(pixels_whi), false);
-	fputc('D', stderr);
+	fputc('D', stderr); fflush(stderr);
 	trigger_press_cnt++;
 }
 
@@ -42,7 +46,7 @@ static void trig_pressed(void)
 static void trig_released(void)
 {
 	neo_write(pixels_blk, sizeof(pixels_blk), false);
-	fputc('U', stderr);
+	fputc('U', stderr); fflush(stderr);
 	trigger_release_cnt++;
 }
 
@@ -85,6 +89,7 @@ void test_trigger(void)
 		err = true;
 		goto ttr_end;
 	}
+	printf("Press trigger 10 times\n");
 	lcd_drawString(0, 0, "Press trigger", WHITE);
 	lcd_drawString(0, 1*2*LCD_CHAR_H, "10 times", WHITE);
 	// Wait for trigger operation.

@@ -1,5 +1,5 @@
 // https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html
-// https://github.com/espressif/esp-idf/tree/v5.2.3/examples/peripherals/i2s
+// https://github.com/espressif/esp-idf/tree/v6.0.2/examples/peripherals/i2s
 
 #include <string.h> // memset
 
@@ -13,10 +13,14 @@
 #include "hw.h"
 #include "sound.h"
 
+//#include "i2s_private.h" // hidden i2s_chan_handle_t members
+// see: /opt/esp6/esp-idf/components/esp_driver_i2c/i2c_private.h
+
 // dma_buffer_size = dma_frame_num * slot_num * slot_bit_width / 8
 // A 2048 byte sized DMA descriptor will trigger an "Interrupt wdt timeout"
 #define DMA_DESC_SZ 128 // DMA descriptor (buffer) size in bytes
 #define DMA_DESC_NUM 8 // Number of DMA descriptors (buffers)
+#define DMA_DEBUG 0 // Turn on DMA debug prints
 
 #define I2S_FRAME_SZ sizeof(slot_t) // Frame size in bytes (16-bit mono)
 #define I2S_FRAME_NUM (DMA_DESC_SZ/I2S_FRAME_SZ) // Number of frames in a DMA descriptor
@@ -50,23 +54,41 @@ static volatile uint32_t dcnt;
 static i2s_chan_handle_t i2s_handle;
 static volatile bool device_en;
 static volatile int32_t volume;
-// static volatile size_t missed_dat, missed_sil;
+
+#if DMA_DEBUG
+static volatile size_t missed_dat, missed_sil;
+#endif
 
 // NOTE:
 // 1) The function i2s_channel_enable() must be called each time a new
 //    sound is played from silence, otherwise the DMA buffers somehow get
 //    messed up and garbled sound will be heard.
-// 2) After a a call to i2s_channel_write() in the I2S callback, sometimes
+// 2) After a call to i2s_channel_write() in the I2S callback, sometimes
 //    the bytes_written will be less than the bytes requested for both active
 //    data and silence. It is not known where in the playback this occurs.
 // 3) When starting to play a sound, preloading one DMA descriptor worth of
 //    data with a call to i2s_channel_preload_data() seems to eliminate the
 //    discrepancy between bytes requested and written in the I2S callback.
+//    However, more than one DMA buffer needs to be preloaded before
+//    playback to prevent a garbled sound.
+// 4) The function i2s_channel_write() should not normally be called within
+//    an interrupt context since it can block. However, it is known that at
+//    least one DMA buffer is available to fill when the i2s done callback
+//    occurs. Thus by limiting the data written in the interrupt handler to
+//    one buffer, the function appears to not block.
+// 5) The buffer of audio samples provided to i2s_channel_preload_data() and
+//    i2s_channel_write() is copied directly to the DMA ring buffer. It is
+//    not expanded from mono frames to stereo frames.
 
+
+// Called when a TX channel finishes sending a DMA buffer.
+// The event data includes the DMA buffer address and size (not used here).
 static bool IRAM_ATTR i2s_done_callback(i2s_chan_handle_t handle, i2s_event_data_t *event, void *user_ctx)
 {
 	slot_t buf[I2S_FRAME_NUM];
-	// size_t bytes_written;
+	#if DMA_DEBUG
+	size_t bytes_written;
+	#endif
 	portENTER_CRITICAL_ISR(&spinlock);
 	if (aidx < asize) {
 		uint32_t idx = aidx;
@@ -74,20 +96,24 @@ static bool IRAM_ATTR i2s_done_callback(i2s_chan_handle_t handle, i2s_event_data
 		aidx =  cyclic ? (aidx + size) % asize : aidx + size;
 		portEXIT_CRITICAL_ISR(&spinlock);
 		int i;
-		// for (i = 0; i < size; i++) buf[i] = (((int)abase[(idx+i)%asize]-IN_BIAS)>>2)*volume/PERCENT;
 		for (i = 0; i < size; i++) buf[i] = (abase[(idx+i)%asize])*volume/PERCENT;
-		// for (i = 0; i < size; i++) buf[i] =  abase[(idx+i)%asize]>>2;
 		while (i < I2S_FRAME_NUM) buf[i++] = 0; // pad to block size with silence
+		#if DMA_DEBUG
+		i2s_channel_write(handle, buf, DMA_DESC_SZ, /*NULL*/ &bytes_written, 0);
+		if (bytes_written != DMA_DESC_SZ) missed_dat += DMA_DESC_SZ-bytes_written;
+		#else
 		i2s_channel_write(handle, buf, DMA_DESC_SZ, NULL /*&bytes_written*/, 0);
-		// i2s_channel_write(handle, buf, DMA_DESC_SZ, /*NULL*/ &bytes_written, 0);
-		// if (bytes_written != DMA_DESC_SZ) missed_dat += DMA_DESC_SZ-bytes_written;
+		#endif
 	} else if (dcnt) {
 		dcnt--; // add silence to DMA buffer when done
 		portEXIT_CRITICAL_ISR(&spinlock);
 		memset(buf, 0, sizeof(buf));
+		#if DMA_DEBUG
+		i2s_channel_write(handle, buf, DMA_DESC_SZ, /*NULL*/ &bytes_written, 0);
+		if (bytes_written != DMA_DESC_SZ) missed_sil += DMA_DESC_SZ-bytes_written;
+		#else
 		i2s_channel_write(handle, buf, DMA_DESC_SZ, NULL /*&bytes_written*/, 0);
-		// i2s_channel_write(handle, buf, DMA_DESC_SZ, /*NULL*/ &bytes_written, 0);
-		// if (bytes_written != DMA_DESC_SZ) missed_sil += DMA_DESC_SZ-bytes_written;
+		#endif
 		if (!dcnt) i2s_channel_disable(i2s_handle);
 	} else {
 		portEXIT_CRITICAL_ISR(&spinlock);
@@ -95,6 +121,38 @@ static bool IRAM_ATTR i2s_done_callback(i2s_chan_handle_t handle, i2s_event_data
 	return false; // no high priority task awoken
 }
 
+// Preload audio data into a TX DMA buffer.
+// Must be called before i2s_channel_enable().
+static void i2s_tx_preload(i2s_chan_handle_t handle)
+{
+	slot_t buf[I2S_FRAME_NUM];
+	size_t bytes_written;
+	portENTER_CRITICAL_ISR(&spinlock);
+	if (aidx < asize) {
+		uint32_t idx = aidx;
+		uint32_t size = (!cyclic && asize < I2S_FRAME_NUM) ? asize : I2S_FRAME_NUM;
+		aidx =  cyclic ? (aidx + size) % asize : aidx + size;
+		portEXIT_CRITICAL_ISR(&spinlock);
+		int i;
+		for (i = 0; i < size; i++) buf[i] = (abase[(idx+i)%asize])*volume/PERCENT;
+		while (i < I2S_FRAME_NUM) buf[i++] = 0; // pad to block size with silence
+		i2s_channel_preload_data(handle, buf, DMA_DESC_SZ, &bytes_written);
+		#if DMA_DEBUG
+		if (bytes_written != DMA_DESC_SZ) missed_dat += DMA_DESC_SZ-bytes_written;
+		#endif
+	} else if (dcnt) {
+		dcnt--; // add silence to DMA buffer when done
+		portEXIT_CRITICAL_ISR(&spinlock);
+		memset(buf, 0, sizeof(buf));
+		i2s_channel_preload_data(handle, buf, DMA_DESC_SZ, &bytes_written);
+		#if DMA_DEBUG
+		if (bytes_written != DMA_DESC_SZ) missed_sil += DMA_DESC_SZ-bytes_written;
+		#endif
+		if (!dcnt) i2s_channel_disable(i2s_handle);
+	} else {
+		portEXIT_CRITICAL_ISR(&spinlock);
+	}
+}
 
 // Initialize the sound driver. Must be called before using sound.
 // May be called again to change sample rate.
@@ -105,11 +163,11 @@ int32_t sound_init(uint32_t sample_hz)
 	sound_set_volume(SOUND_VOLUME_DEFAULT);
 
 	/* * * * * * * * * * Sound Config * * * * * * * * * */
-	ESP_LOGI(TAG, "Configure I2S channel in Standard mode, Philips format");
+	ESP_LOGI(TAG, "Configure I2S channel in Standard mode, Philips format, %lu Hz", sample_hz);
 	i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_AUTO, I2S_ROLE_MASTER);
 	chan_cfg.dma_desc_num = DMA_DESC_NUM;
 	chan_cfg.dma_frame_num = I2S_FRAME_NUM;
-	// chan_cfg.auto_clear = true;
+	chan_cfg.auto_clear = false;
 	ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, &i2s_handle, NULL));
 	i2s_std_config_t std_cfg = {
 		.clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(sample_hz),
@@ -167,21 +225,22 @@ void sound_start(const void *audio, uint32_t size, bool wait)
 	cyclic = false;
 	dcnt = DMA_DESC_NUM;
 	portEXIT_CRITICAL(&spinlock);
-	// TODO: preload audio data instead of silence.
 	if (enable) {
-		size_t bytes_loaded; // must be used in preload function
-		slot_t buf[I2S_FRAME_NUM];
-		memset(buf, 0, sizeof(buf));
-		// 2ms delay at 32kHz
-		i2s_channel_preload_data(i2s_handle, buf, sizeof(buf), &bytes_loaded);
-		// if (bytes_loaded != sizeof(buf)) 
-			// printf("missed0:%u\n", sizeof(buf)-bytes_loaded);
+		i2s_tx_preload(i2s_handle); // preload two DMA buffers
+		i2s_tx_preload(i2s_handle);
+		#if DMA_DEBUG
+		printf("missed0:%u,%u\n", missed_dat, missed_sil);
+		#endif
 		i2s_channel_enable(i2s_handle);
 	}
-	// printf("missed1:%u,%u\n", missed_dat, missed_sil);
+	#if DMA_DEBUG
+	printf("missed1:%u,%u\n", missed_dat, missed_sil);
+	#endif
 	while (wait && aidx < asize)
 		vTaskDelay(pdMS_TO_TICKS(POLL_DELAY));
-	// printf("missed2:%u,%u\n", missed_dat, missed_sil);
+	#if DMA_DEBUG
+	printf("missed2:%u,%u\n", missed_dat, missed_sil);
+	#endif
 }
 
 // Cyclically play samples from audio buffer until sound_stop() is called.
@@ -200,13 +259,11 @@ void sound_cyclic(const void *audio, uint32_t size)
 	dcnt = DMA_DESC_NUM;
 	portEXIT_CRITICAL(&spinlock);
 	if (enable) {
-		size_t bytes_loaded; // must be used in preload function
-		slot_t buf[I2S_FRAME_NUM];
-		memset(buf, 0, sizeof(buf));
-		// 2ms delay at 32kHz
-		i2s_channel_preload_data(i2s_handle, buf, sizeof(buf), &bytes_loaded);
-		// if (bytes_loaded != sizeof(buf)) 
-			// printf("missed0:%u\n", sizeof(buf)-bytes_loaded);
+		i2s_tx_preload(i2s_handle); // preload two DMA buffers
+		i2s_tx_preload(i2s_handle);
+		#if DMA_DEBUG
+		printf("missed0:%u,%u\n", missed_dat, missed_sil);
+		#endif
 		i2s_channel_enable(i2s_handle);
 	}
 }
