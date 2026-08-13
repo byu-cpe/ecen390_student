@@ -2,6 +2,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_log.h" // LOG_COLOR_*
 
 #include "config.h" // CONFIG_*
 #include "hw.h" // HW_LTAG_*
@@ -76,5 +77,6 @@ void test_hitLedTimer(void)
 	}
 
 thlt_end:
-	printf("******** test_hitLedTimer() %s ********\n\n", err ? "Error" : "Done");
+	printf("******** test_hitLedTimer() %s ********\n\n",
+		err ? LOG_COLOR_E "Error" LOG_RESET_COLOR : "Done");
 }

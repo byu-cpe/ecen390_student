@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdlib.h> // rand
 
+#include "esp_log.h" // LOG_COLOR_*
+
 #include "delay.h"
 
 #define MAX_ERROR_CNT 5
@@ -78,5 +80,6 @@ void test_delay(void)
 	err = err || error_cnt;
 
 td_end:
-	printf("******** test_delay() %s ********\n\n", err ? "Error" : "Done");
+	printf("******** test_delay() %s ********\n\n",
+		err ? LOG_COLOR_E "Error" LOG_RESET_COLOR : "Done");
 }

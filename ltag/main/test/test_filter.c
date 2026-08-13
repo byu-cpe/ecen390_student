@@ -5,6 +5,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h" // vTaskDelay
 #include "esp_timer.h" // esp_timer_get_time
+#include "esp_log.h" // LOG_COLOR_*
 
 #include "config.h"
 #include "filter.h"
@@ -156,8 +157,7 @@ static bool firArithmetic(void) {
 
 // Number of samples to send through the energy test.
 #define TEST_SAMPLES (FILTER_ENERGY_SAMPLE_COUNT+100)
-
-// TODO: Test energy delay line size?
+#define INPUT_VAL 0.5
 
 // Performs a test of the filter_computeEnergy() function.
 // Add a single value to each energy delay line each time step.
@@ -165,17 +165,20 @@ static bool firArithmetic(void) {
 static bool computeEnergy(void) {
   bool success = true; // Be optimistic.
   uint32_t error_cnt = 0;
+  filter_data_t goldenValue;
+  filter_data_t chanEnergy[FILTER_CHANNELS];
   // Perform many incremental energy computations.
-  filter_data_t input = (filter_data_t)1.0;
+  filter_data_t input = (filter_data_t)INPUT_VAL;
+  filter_data_t input2 = input*input;
   for (unsigned j = 0; j < TEST_SAMPLES; j++) {
-    filter_data_t goldenValue = (j < FILTER_ENERGY_SAMPLE_COUNT) ?
-      (filter_data_t)(j+1) : (filter_data_t)FILTER_ENERGY_SAMPLE_COUNT;
+    goldenValue = (j < FILTER_ENERGY_SAMPLE_COUNT) ?
+      (filter_data_t)(j+1)*input2 : (filter_data_t)FILTER_ENERGY_SAMPLE_COUNT*input2;
     for (uint16_t i = 0; i < FILTER_CHANNELS; i++) {
       filter_data_t testValue = filter_computeEnergy(i, input);
       if (!FP_EQ(testValue, goldenValue) && error_cnt < MAX_ERROR_CNT) {
         printf("Sample count:%u\n", j);
         // Print out values that indicate the failure.
-        printf("computeEnergy() failed for index: %u\n"
+        printf("computeEnergy() failed for channel: %u\n"
                "golden value:           %.18e\n"
                "filter_computeEnergy(): %.18e\n",
                i, goldenValue, testValue);
@@ -184,6 +187,23 @@ static bool computeEnergy(void) {
         error_cnt++;
         success = false; // Test failed.
       }
+    }
+  }
+  // Test filter_getEnergyArray() and filter_getEnergyValue()
+  filter_getEnergyArray(chanEnergy);
+  for (uint16_t i = 0; success && i < FILTER_CHANNELS; i++) {
+    filter_data_t testValue = filter_getEnergyValue(i);
+    if (!FP_EQ(testValue, goldenValue)) {
+      printf("Error: getEnergyValue(%u): %.18e\n"
+             "                expected: %.18e\n",
+             i, testValue, goldenValue);
+      success = false; // Test failed.
+    }
+    if (!FP_EQ(chanEnergy[i], goldenValue)) {
+      printf("Error: getEnergyArray(), chan[%u]: %.18e\n"
+             "                        expected: %.18e\n",
+             i, chanEnergy[i], goldenValue);
+      success = false; // Test failed.
     }
   }
   return success;
@@ -242,7 +262,7 @@ static bool addSample(void)
     // Minimum max1 energy with no attenuation of input signal: 1501
     // Maximum max2 energy with no attenuation of input signal:  226 x 1.1 = 249
     // Minimum max1 energy with 1dB attenuation of input signal: 1192 x .9 = 1072
-    // Maximum max2 energy with 1db attenuation of input signal:  179
+    // Maximum max2 energy with 1dB attenuation of input signal:  179
     // Find top two energies
     uint16_t max1 = 0;
     for (uint16_t i = max1+1; i < FILTER_CHANNELS; i++)
@@ -611,13 +631,14 @@ void test_filter(void) {
   printf("filter_addSample() test\n");
   success &= addSample(); 
 
-  printf("******** test_filter() %s ********\n\n", success ? "Done" : "Error");
+  printf("******** test_filter() %s ********\n\n",
+    success ? "Done" : LOG_COLOR_E "Error" LOG_RESET_COLOR);
 
   /* * * * * * * * Plot functions * * * * * * * */
   // Plot the frequency response of the FIR filter in the passband,
   // transition band, and stopband. A square wave is used for the signal.
   firEnergy();
-  msDelay(FOUR_SECONDS); // Leave on the display for a few of seconds.
+  msDelay(FOUR_SECONDS); // Leave on the display for a few seconds.
   // Plot the frequency response of each IIR filter over all the
   // filter channel frequencies.
   for (uint16_t i = 0; i < FILTER_CHANNELS; i++) {
@@ -627,7 +648,6 @@ void test_filter(void) {
 }
 
 /* TODO:
- * Test filter_getEnergyValue()
  * Test performance of functions (e.g. FIR filter not run each sample)
  * Check that the frequency response of the FIR and IIR filters
    is in spec mathematically instead of just visually.

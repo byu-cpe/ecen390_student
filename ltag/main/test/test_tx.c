@@ -5,6 +5,7 @@
 #include "freertos/task.h"
 #include "driver/gpio.h" // gpio_*
 #include "esp_timer.h"
+#include "esp_log.h" // LOG_COLOR_*
 
 #include "config.h" // CONFIG_*
 #include "hw.h" // HW_LTAG_*
@@ -211,7 +212,8 @@ void test_tx(void)
 
 ttx_end:
 	lcd_drawString(0, 4*2*LCD_CHAR_H, err?"fail":"pass", err?RED:GREEN);
-	printf("******** test_tx() %s ********\n\n", err ? "Error" : "Done");
+	printf("******** test_tx() %s ********\n\n",
+		err ? LOG_COLOR_E "Error" LOG_RESET_COLOR : "Done");
 }
 
 // setup internal loopback on gpio pin on esp32

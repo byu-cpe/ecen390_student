@@ -2,6 +2,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_log.h" // LOG_COLOR_*
 
 #include "config.h" // CONFIG_*
 #include "hw.h" // HW_LTAG_*
@@ -127,5 +128,6 @@ void test_trigger(void)
 
 ttr_end:
 	lcd_drawString(0, 2*2*LCD_CHAR_H, err?"fail":"pass", err?RED:GREEN);
-	printf("******** test_trigger() %s ********\n\n", err ? "Error" : "Done");
+	printf("******** test_trigger() %s ********\n\n",
+		err ? LOG_COLOR_E "Error" LOG_RESET_COLOR : "Done");
 }
